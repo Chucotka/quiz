@@ -46,28 +46,33 @@ const PlayerAppFlow: React.FC = () => {
   }, [roomCode, navigate, roomData?.status]);
 
   const handleJoin = async (code: string, nickname: string) => {
-    const roomRef = ref(db, `rooms/${code}`);
-    const snapshot = await get(roomRef);
+    try {
+      const roomRef = ref(db, `rooms/${code}`);
+      const snapshot = await get(roomRef);
 
-    if (!snapshot.exists()) {
-      alert('Комната не найдена!');
-      return;
+      if (!snapshot.exists()) {
+        alert('Комната не найдена!');
+        return;
+      }
+
+      const room = snapshot.val() as Room;
+      if (room.status !== 'lobby') {
+        alert('Игра уже началась!');
+        return;
+      }
+
+      const newPlayerId = `player_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      await update(ref(db, `rooms/${code}/players/${newPlayerId}`), {
+        nickname,
+        score: 0,
+      });
+
+      setRoomCode(code);
+      setPlayerId(newPlayerId);
+    } catch (err) {
+      console.error("Join Error:", err);
+      alert("Не удалось подключиться. Проверьте конфигурацию Firebase .env и правила доступа базы данных.");
     }
-
-    const room = snapshot.val() as Room;
-    if (room.status !== 'lobby') {
-      alert('Игра уже началась!');
-      return;
-    }
-
-    const newPlayerId = `player_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    await update(ref(db, `rooms/${code}/players/${newPlayerId}`), {
-      nickname,
-      score: 0,
-    });
-
-    setRoomCode(code);
-    setPlayerId(newPlayerId);
   };
 
   const handleAnswer = async (answerIndex: 0 | 1 | 2 | 3, timeElapsed: number) => {

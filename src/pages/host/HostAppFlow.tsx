@@ -24,11 +24,14 @@ const HostAppFlow: React.FC = () => {
     set(roomRef, {
       status: 'lobby',
       currentQuestion: 0,
+    }).catch(err => {
+      console.error("Firebase Room Initialization Error:", err);
+      alert("Ошибка при создании комнаты. Проверьте настройки Firebase и права доступа (Security Rules) в Realtime Database.");
     });
 
     // Write questions for this room
     const questionsRef = ref(db, `questions/${code}`);
-    set(questionsRef, defaultQuestions);
+    set(questionsRef, defaultQuestions).catch(err => console.error("Firebase Questions Setup Error:", err));
 
     // Listen to room updates
     const unsubscribe = onValue(roomRef, (snapshot) => {
